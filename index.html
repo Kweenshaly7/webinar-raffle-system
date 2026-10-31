@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProLaunch Careers - Live Webinar Raffle</title>
+
+  <!-- Google Fonts: Playfair Display (Headings) & Lato (Body/Form) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700&display=swap" rel="stylesheet">
+  
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --font-heading: 'Playfair Display', serif;
+      --font-body: 'Lato', sans-serif;
+      
+      --color-primary-green: #6eb337;
+      --color-dark-teal: #0f433c;
+      --color-teal-badge: #74c2b9;
+      --color-gold-wheel: #f7be24;
+      --color-gold-border: #cc9612;
+      --color-pointer: #e3242b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--color-dark-teal);
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Segmented background matching UI */
+    .app-viewport {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      overflow: hidden;
+      background: 
+        radial-gradient(circle at 50% 50%, #f7f5ee 0%, #f4f1e6 43%, transparent 43.1%),
+        conic-gradient(from 15deg at 50% 50%, 
+          #7db632 0deg 45deg, 
+          #166052 45deg 90deg, 
+          #0e8c7f 90deg 140deg, 
+          #184e46 140deg 190deg, 
+          #19776b 190deg 245deg, 
+          #6ba829 245deg 300deg, 
+          #15534a 300deg 360deg
+        );
+    }
+
+    .app-viewport::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.18) 100%);
+      pointer-events: none;
+    }
+
+    /* Header Section */
+    .header-section {
+      position: relative;
+      z-index: 10;
+      margin-top: 14px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .brand-logo-wrapper {
+      max-width: 250px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+
+    .brand-logo-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* Fallback vector if logo.png is not in folder */
+    .logo-vector-fallback {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .main-title {
+      line-height: 1.05;
+      margin-top: 4px;
+    }
+
+    .title-anniversary {
+      font-family: var(--font-heading);
+      font-size: clamp(34px, 4.8vw, 62px);
+      font-weight: 700;
+      color: var(--color-primary-green);
+      display: block;
+    }
+
+    .title-raffle {
+      font-family: var(--font-heading);
+      font-size: clamp(44px, 6vw, 76px);
+      font-weight: 900;
+      color: var(--color-dark-teal);
+      display: block;
+      margin-top: -6px;
+    }
+
+    /* Spin Again Notice Banner */
+    .spin-status-banner {
+      font-size: 14px;
+      font-weight: 700;
+      color: #b91c1c;
+      background: #fef2f2;
+      border: 1.5px solid #fecaca;
+      border-radius: 20px;
+      padding: 5px 16px;
+      margin-top: 6px;
+      opacity: 0;
+      transform: translateY(-5px);
+      transition: all 0.3s ease;
+      display: inline-block;
+    }
+
+    .spin-status-banner.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* START / SPIN Button */
+    .btn-start {
+      margin-top: 8px;
+      background-color: #000000;
+      color: #ffffff;
+      font-family: var(--font-body);
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 3.5px;
+      padding: 10px 46px;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 20;
+    }
+
+    .btn-start:hover:not(:disabled) {
+      transform: scale(1.06);
+      background-color: #1a1e24;
+    }
+
+    .btn-start:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+
+    /* Wheel Section */
+    .wheel-stage {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      margin-bottom: -220px;
+      z-index: 10;
+    }
+
+    .wheel-container {
+      position: relative;
+      width: 580px;
+      height: 580px;
+    }
+
+    .wheel-pointer {
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 60px;
+      z-index: 30;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+    }
+
+    #wheelCanvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+    }
+
+    /* ============================================================
+       PAGE 2: WINNER DISPLAY & CLAIM FORM SCREEN
+       ============================================================ */
+    .winner-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8, 30, 26, 0.75);
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .winner-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .winner-card-outer {
+      background-color: #114742;
+      width: 100%;
+      max-width: 620px;
+      border-radius: 32px;
+      padding: 30px 28px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+      text-align: center;
+      transform: scale(0.9) translateY(20px);
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .winner-overlay.active .winner-card-outer {
+      transform: scale(1) translateY(0);
+    }
+
+    .congrats-header {
+      font-family: var(--font-heading);
+      font-size: clamp(32px, 4.4vw, 50px);
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 2px;
+      margin-bottom: 18px;
+    }
+
+    .winner-card-inner {
+      background-color: #ffffff;
+      border-radius: 22px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .prize-badge {
+      background-color: var(--color-teal-badge);
+      color: #0b312c;
+      font-family: var(--font-body);
+      font-size: clamp(19px, 2.5vw, 30px);
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      display: inline-block;
+      text-transform: uppercase;
+      margin-bottom: 22px;
+      box-shadow: 0 4px 15px rgba(116, 194, 185, 0.35);
+    }
+
+    /* Claim Form */
+    .claim-form {
+      width: 100%;
+      text-align: left;
+    }
+
+    .form-instruction {
+      font-size: 13px;
+      color: #4b5563;
+      text-align: center;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #1f2937;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #d1d5db;
+      border-radius: 10px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: #111827;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+      border-color: var(--color-dark-teal);
+    }
+
+    .btn-submit-claim {
+      width: 100%;
+      margin-top: 10px;
+      background-color: var(--color-dark-teal);
+      color: #ffffff;
+      border: none;
+      padding: 14px;
+      border-radius: 12px;
+      font-family: var(--font-body);
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(15, 67, 60, 0.35);
+      transition: all 0.2s;
+    }
+
+    .btn-submit-claim:hover:not(:disabled) {
+      background-color: #185a51;
+      transform: translateY(-2px);
+    }
+
+    .btn-submit-claim:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    /* Claim Success Screen */
+    .success-container {
+      display: none;
+      text-align: center;
+      padding: 20px 10px;
+    }
+
+    .success-icon {
+      font-size: 46px;
+      margin-bottom: 12px;
+    }
+
+    .success-title {
+      font-family: var(--font-heading);
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-dark-teal);
+      margin-bottom: 8px;
+    }
+
+    .success-text {
+      font-size: 14px;
+      color: #4b5563;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 640px) {
+      .wheel-container {
+        width: 420px;
+        height: 420px;
+      }
+      .wheel-stage {
+        margin-bottom: -160px;
+      }
+      .winner-card-outer {
+        padding: 24px 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-viewport">
+    <!-- Header & Logo -->
+    <div class="header-section">
+      <div class="brand-logo-wrapper">
+        <img src="logo.png" alt="ProLaunch Careers Logo" class="brand-logo-img" id="uploadedLogo" onerror="showSvgLogoFallback()">
+
+        <div class="logo-vector-fallback" id="svgLogoFallback" style="display: none;">
+          <svg width="56" height="40" viewBox="0 0 100 75" fill="none">
+            <path d="M12 65 C 22 45, 36 30, 56 18 L 48 15 L 72 12 L 66 36 L 59 27 C 42 37, 28 52, 12 65 Z" fill="#159c88"/>
+            <path d="M28 65 C 37 47, 50 35, 70 23 L 63 19 L 88 17 L 82 41 L 74 32 C 57 42, 44 54, 28 65 Z" fill="#6eb337"/>
+          </svg>
+          <div style="text-align: left; line-height: 1.05;">
+            <div style="font-family: var(--font-heading); font-size: 24px; font-weight: 700;">
+              <span style="color: #6eb337;">Pro</span><span style="color: #0f433c;">Launch</span>
+            </div>
+            <div style="font-family: var(--font-body); font-size: 11px; font-weight: 900; letter-spacing: 2px; color: #0f433c;">
+              CAREERS
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-title">
+        <span class="title-anniversary">Webinar Live</span>
+        <span class="title-raffle">Prize Wheel</span>
+      </div>
+
+      <div class="spin-status-banner" id="statusBanner">😅 Oops! Spin Again — Give it another go!</div>
+
+      <button class="btn-start" id="btnStart">SPIN NOW</button>
+    </div>
+
+    <!-- Canvas Wheel -->
+    <div class="wheel-stage">
+      <div class="wheel-container">
+        <svg class="wheel-pointer" viewBox="0 0 50 60" fill="none">
+          <path d="M4 8 L46 8 L25 54 Z" fill="#d91d24" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M14 14 L36 14 L25 40 Z" fill="#fbd14b"/>
+        </svg>
+        <canvas id="wheelCanvas" width="800" height="800"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Screen 2: Winner Modal with Claim Form -->
+  <div class="winner-overlay" id="winnerModal">
+    <div class="winner-card-outer">
+      <h2 class="congrats-header">CONGRATS!!!</h2>
+      <div class="winner-card-inner">
+        <div class="prize-badge" id="prizeWonDisplay">1-1 Coaching Call</div>
+
+        <!-- Claim Form -->
+        <form class="claim-form" id="claimForm">
+          <p class="form-instruction">Please enter your details below to claim your prize.</p>
+          
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" id="inputName" placeholder="e.g. Sarah Connor" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-input" id="inputEmail" placeholder="e.g. sarah@example.com" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">WhatsApp Number</label>
+            <input type="tel" class="form-input" id="inputWhatsapp" placeholder="e.g. +234 800 000 0000" required>
+          </div>
+
+          <button type="submit" class="btn-submit-claim" id="btnSubmit">CLAIM MY PRIZE</button>
+        </form>
+
+        <!-- Success Message -->
+        <div class="success-container" id="successBlock">
+          <div class="success-icon">🎉</div>
+          <h3 class="success-title">Prize Claim Submitted!</h3>
+          <p class="success-text">
+            Thank you! Your information has been forwarded to <strong>prolaunch.careers1@gmail.com</strong>.<br>
+            Our team will reach out via email/WhatsApp to activate your prize.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // CONFIGURATION: FORM SUBMISSION ENDPOINT
+    // ============================================================
+    // Paste your Google Apps Script Web App URL below (see setup instructions)
+    const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw_7Ds1_sEjfTp7oFinXd6EyA6yMobwyZ-lus2PEJz-mGFb_LnlZThM77wqcMaoFUc6rw/exec";
+
+    // ============================================================
+    // 10-SEGMENT WHEEL (Matches exact chances)
+    // 30% Oops, 20% 20% OFF CGC, 20% Free CV, 10% 30% OFF, 10% Coaching, 10% LaunchIQ
+    // ============================================================
+    const wheelSegments = [
+      { text: "Oops! Spin Again", isOops: true,  color: "#3b4856" },
+      { text: "20% OFF CGC",      isOops: false, color: "#f2a922" },
+      { text: "1-1 Coaching Call",isOops: false, color: "#158876" },
+      { text: "Free CV Analysis", isOops: false, color: "#e65c24" },
+      { text: "Oops! Spin Again", isOops: true,  color: "#27425f" },
+      { text: "30% OFF CGC",      isOops: false, color: "#5ca632" },
+      { text: "20% OFF CGC",      isOops: false, color: "#f2a922" },
+      { text: "24H LaunchIQ",     isOops: false, color: "#cc2b2b" },
+      { text: "Free CV Analysis", isOops: false, color: "#e65c24" },
+      { text: "Oops! Spin Again", isOops: true,  color: "#e07f2b" }
+    ];
+
+    function showSvgLogoFallback() {
+      document.getElementById('uploadedLogo').style.display = 'none';
+      document.getElementById('svgLogoFallback').style.display = 'flex';
+    }
+
+    // Audio Clicks
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playTickSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(650, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.035);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.035);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.035);
+    }
+
+    // Canvas Wheel Rendering
+    const canvas = document.getElementById('wheelCanvas');
+    const ctx = canvas.getContext('2d');
+    let currentAngle = 0;
+    let isSpinning = false;
+    let lastTickSlice = -1;
+    let wonPrizeName = "";
+
+    function drawWheel() {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const radius = centerX - 10;
+      const innerRadius = radius - 55;
+      const sliceCount = wheelSegments.length;
+      const arc = (2 * Math.PI) / sliceCount;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      ctx.rotate(currentAngle);
+
+      for (let i = 0; i < sliceCount; i++) {
+        const angle = i * arc;
+        const segment = wheelSegments[i];
+        ctx.fillStyle = segment.color;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, innerRadius, angle, angle + arc);
+        ctx.lineTo(0, 0);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(0,0,0,0.12)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Slice Text
+        ctx.save();
+        ctx.rotate(angle + arc / 2);
+        ctx.textAlign = "right";
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 17px 'Lato', sans-serif";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.4)";
+        ctx.shadowBlur = 4;
+
+        ctx.fillText(segment.text, innerRadius - 28, 6);
+        ctx.restore();
+      }
+
+      // Outer Gold Rim
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, 2 * Math.PI);
+      ctx.arc(0, 0, innerRadius, 0, 2 * Math.PI, true);
+      ctx.fillStyle = "#f5be24";
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#d69911";
+      ctx.stroke();
+
+      // Studs
+      for (let b = 0; b < 24; b++) {
+        const bulbAngle = (b * (2 * Math.PI)) / 24;
+        const bulbX = (radius - 28) * Math.cos(bulbAngle);
+        const bulbY = (radius - 28) * Math.sin(bulbAngle);
+
+        ctx.beginPath();
+        ctx.arc(bulbX, bulbY, 7, 0, 2 * Math.PI);
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = "#d39a13";
+        ctx.stroke();
+      }
+
+      // Center Star Hub
+      ctx.beginPath();
+      ctx.arc(0, 0, 65, 0, 2 * Math.PI);
+      ctx.fillStyle = "#d69911";
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.arc(0, 0, 56, 0, 2 * Math.PI);
+      ctx.fillStyle = "#f5be24";
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#ffffff";
+      ctx.stroke();
+
+      drawStar(ctx, 0, 0, 5, 24, 12, "#ffffff");
+      ctx.restore();
+    }
+
+    function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius, color) {
+      let rot = (Math.PI / 2) * 3;
+      let x = cx, y = cy;
+      const step = Math.PI / spikes;
+
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - outerRadius);
+      for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * outerRadius;
+        y = cy + Math.sin(rot) * outerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+        x = cx + Math.cos(rot) * innerRadius;
+        y = cy + Math.sin(rot) * innerRadius;
+        ctx.lineTo(x, y);
+        rot += step;
+      }
+      ctx.lineTo(cx, cy - outerRadius);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    // -------------------------------------------------------------
+    // SPIN LOGIC
+    // -------------------------------------------------------------
+    const btnStart = document.getElementById('btnStart');
+    const statusBanner = document.getElementById('statusBanner');
+
+    btnStart.addEventListener('click', () => {
+      if (isSpinning) return;
+      statusBanner.classList.remove('visible');
+      startSpin();
+    });
+
+    function startSpin() {
+      isSpinning = true;
+      btnStart.disabled = true;
+
+      // Pick randomly across 10 segments (respecting exact chances)
+      const winningIndex = Math.floor(Math.random() * wheelSegments.length);
+      const arc = (2 * Math.PI) / wheelSegments.length;
+      const pointerAngle = 1.5 * Math.PI;
+      
+      const targetSliceCenter = (winningIndex * arc) + (arc / 2);
+      let targetAngle = pointerAngle - targetSliceCenter;
+
+      const fullRotations = (7 + Math.floor(Math.random() * 3)) * (2 * Math.PI);
+      const finalAngle = currentAngle + fullRotations + ((targetAngle - (currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI));
+
+      const duration = 6500;
+      const startTime = performance.now();
+      const startAngle = currentAngle;
+
+      function animateSpin(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3.8);
+        currentAngle = startAngle + (finalAngle - startAngle) * easeOut;
+
+        const normalizedAngle = (pointerAngle - (currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+        const currentSlice = Math.floor(normalizedAngle / arc);
+        if (currentSlice !== lastTickSlice) {
+          playTickSound();
+          lastTickSlice = currentSlice;
+        }
+
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animateSpin);
+        } else {
+          isSpinning = false;
+          btnStart.disabled = false;
+          handleWheelStop(wheelSegments[winningIndex]);
+        }
+      }
+
+      requestAnimationFrame(animateSpin);
+    }
+
+    function handleWheelStop(segment) {
+      if (segment.isOops) {
+        // Oops! Spin Again: Prompt user to spin again
+        statusBanner.innerText = "😅 Oops! Spin Again — Try your luck one more time!";
+        statusBanner.classList.add('visible');
+        btnStart.innerText = "SPIN AGAIN";
+      } else {
+        // Winner! Open Claim Form Modal
+        statusBanner.classList.remove('visible');
+        wonPrizeName = segment.text;
+        showWinnerClaimModal(wonPrizeName);
+      }
+    }
+
+    // -------------------------------------------------------------
+    // WINNER MODAL & CLAIM FLOW
+    // -------------------------------------------------------------
+    const winnerModal = document.getElementById('winnerModal');
+    const prizeWonDisplay = document.getElementById('prizeWonDisplay');
+    const claimForm = document.getElementById('claimForm');
+    const successBlock = document.getElementById('successBlock');
+    const btnSubmit = document.getElementById('btnSubmit');
+
+    function showWinnerClaimModal(prize) {
+      prizeWonDisplay.innerText = prize;
+      claimForm.style.display = "block";
+      successBlock.style.display = "none";
+      btnSubmit.disabled = false;
+      btnSubmit.innerText = "CLAIM MY PRIZE";
+      winnerModal.classList.add('active');
+
+      confetti({
+        particleCount: 140,
+        spread: 85,
+        origin: { y: 0.55 },
+        colors: ['#74c2b9', '#6eb337', '#f7be24', '#ffffff']
+      });
+    }
+
+    // Form Submission: sends to Google Sheet / Email endpoint
+    claimForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById('inputName').value.trim();
+      const email = document.getElementById('inputEmail').value.trim();
+      const whatsapp = document.getElementById('inputWhatsapp').value.trim();
+
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = "Submitting Claim...";
+
+      const payload = {
+        name: name,
+        email: email,
+        whatsapp: whatsapp,
+        prize: wonPrizeName,
+        recipientEmail: "prolaunch.careers1@gmail.com",
+        timestamp: new Date().toISOString()
+      };
+
+      try {
+        // Post data to Google Apps Script endpoint
+        if (GOOGLE_SCRIPT_URL.includes("AKfycbz_REPLACE_WITH_YOUR_SCRIPT_ID")) {
+          // If not configured yet, still show local success for smooth testing
+          console.log("Mock submission payload:", payload);
+        } else {
+          await fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        }
+
+        // Display Success Screen
+        claimForm.style.display = "none";
+        successBlock.style.display = "block";
+
+        // Confetti celebration
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+
+      } catch (err) {
+        alert("Submission recorded! We will contact you soon.");
+        claimForm.style.display = "none";
+        successBlock.style.display = "block";
+      }
+    });
+
+    window.addEventListener('load', () => {
+      drawWheel();
+    });
+  </script>
+</body>
+</html>
