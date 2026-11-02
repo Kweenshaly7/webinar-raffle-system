@@ -24,6 +24,7 @@
       --color-gold-wheel: #f7be24;
       --color-gold-border: #cc9612;
       --color-pointer: #e3242b;
+      --wheel: clamp(280px, calc((100dvh - 350px) / 0.62), min(680px, 62vw));
     }
 
         * {
@@ -123,7 +124,7 @@
 
     .title-anniversary {
       font-family: var(--font-heading);
-      font-size: clamp(34px, 4.8vw, 62px);
+      font-size: clamp(28px, min(4.8vw, 8.5vh), 62px);
       font-weight: 700;
       color: var(--color-primary-green);
       display: block;
@@ -131,7 +132,7 @@
 
     .title-raffle {
       font-family: var(--font-heading);
-      font-size: clamp(44px, 6vw, 76px);
+      font-size: clamp(38px, min(6vw, 10.5vh), 76px);
       font-weight: 900;
       color: var(--color-dark-teal);
       display: block;
@@ -194,14 +195,14 @@
       width: 100%;
       display: flex;
       justify-content: center;
-      margin-bottom: -220px;
+      margin-bottom: calc(var(--wheel) * -0.38);
       z-index: 10;
     }
 
     .wheel-container {
       position: relative;
-      width: 580px;
-      height: 580px;
+      width: var(--wheel);
+      height: var(--wheel);
     }
 
     .wheel-pointer {
@@ -392,7 +393,12 @@
       line-height: 1.5;
     }
 
-        @media (max-width: 640px) {
+          /* ===== PHONES & TABLETS (PORTRAIT) ===== */
+    @media (max-width: 640px), (orientation: portrait) {
+      :root {
+        --wheel: min(92vw, 46dvh, 560px);
+      }
+
       .app-viewport {
         justify-content: flex-start;
         background:
@@ -408,10 +414,11 @@
           );
       }
 
-      .header-section { margin-top: 12px; padding: 0 14px; }
-      .brand-logo-wrapper { max-width: 190px; height: 52px; }
-      .title-anniversary { font-size: 30px; }
-      .title-raffle { font-size: 42px; margin-top: -4px; }
+      /* Logo sits well inside the circle, not against its top edge */
+      .header-section { margin-top: clamp(30px, 6.5dvh, 60px); padding: 0 14px; }
+      .brand-logo-wrapper { max-width: 190px; height: 52px; margin-bottom: 6px; }
+      .title-anniversary { font-size: clamp(30px, 6vw, 56px); }
+      .title-raffle { font-size: clamp(42px, 8vw, 76px); margin-top: -4px; }
 
       .spin-status-banner {
         font-size: 12.5px;
@@ -423,16 +430,12 @@
 
       .btn-start { font-size: 14px; padding: 12px 44px; margin-top: 10px; }
 
-      /* Full wheel, centered in the remaining space, always fits the screen */
+      /* Full wheel, centered in the remaining space */
       .wheel-stage {
         flex: 1;
         align-items: center;
         margin-bottom: 0;
         padding-bottom: 12px;
-      }
-      .wheel-container {
-        width: min(92vw, 46dvh, 440px);
-        height: min(92vw, 46dvh, 440px);
       }
       .wheel-pointer { width: 38px; height: 46px; top: -20px; }
 
@@ -440,6 +443,64 @@
       .winner-card-outer { padding: 22px 14px; border-radius: 24px; }
       .winner-card-inner { padding: 20px 14px; }
       .prize-badge { padding: 12px 16px; margin-bottom: 18px; }
+    }
+
+    /* ===== PHONES (LANDSCAPE): title on the left, wheel on the right ===== */
+    @media (orientation: landscape) and (max-height: 500px) {
+      :root {
+        --wheel: min(82dvh, 46vw);
+      }
+
+      .app-viewport {
+        flex-direction: row;
+        justify-content: space-evenly;
+        align-items: center;
+        background:
+          radial-gradient(ellipse at 50% 50%, #f7f5ee 0%, #f4f1e6 78%, transparent 78.1%),
+          conic-gradient(from 15deg at 50% 50%,
+            #7db632 0deg 45deg,
+            #166052 45deg 90deg,
+            #0e8c7f 90deg 140deg,
+            #184e46 140deg 190deg,
+            #19776b 190deg 245deg,
+            #6ba829 245deg 300deg,
+            #15534a 300deg 360deg
+          );
+      }
+
+      .header-section { margin-top: 0; padding: 0; flex: 0 1 44%; }
+      .brand-logo-wrapper { max-width: 150px; height: 42px; margin-bottom: 4px; }
+      .title-anniversary { font-size: 26px; }
+      .title-raffle { font-size: 36px; margin-top: -3px; }
+
+      .spin-status-banner {
+        font-size: 11.5px;
+        padding: 4px 12px;
+        margin-top: 4px;
+        max-width: 100%;
+      }
+
+      .btn-start { font-size: 13px; padding: 10px 36px; margin-top: 8px; }
+
+      .wheel-stage {
+        flex: 0 0 auto;
+        width: auto;
+        align-items: center;
+        margin: 0;
+        padding: 0;
+      }
+      .wheel-pointer { width: 30px; height: 38px; top: -16px; }
+
+      /* Compact claim popup so the form fits a short screen */
+      .winner-card-outer { padding: 14px 16px; max-width: 540px; border-radius: 20px; }
+      .congrats-header { font-size: 24px; margin-bottom: 10px; }
+      .winner-card-inner { padding: 14px 16px; }
+      .prize-badge { font-size: 16px; padding: 8px 14px; margin-bottom: 10px; }
+      .form-instruction { margin-bottom: 8px; }
+      .form-group { margin-bottom: 8px; }
+      .form-label { margin-bottom: 3px; }
+      .form-input { padding: 8px 12px; }
+      .btn-submit-claim { padding: 10px; margin-top: 4px; }
     }
   </style>
 </head>
